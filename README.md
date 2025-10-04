@@ -1,79 +1,90 @@
-Agentic AI Manufacturing Data Integration Platform
-🤖 Agentic AI Manufacturing Integration is an interactive AI-powered system that integrates production ERP/MES data with CMM quality measurements to deliver comprehensive manufacturing analytics and actionable insights.
+# 🤖 Agentic AI Manufacturing Data Integration Platform
+**Agentic AI Manufacturing Integration is an interactive AI-powered system that integrates production ERP/MES data with CMM quality measurements to deliver comprehensive manufacturing analytics and actionable insights.** 
 
-🚀 Project Overview
-Manufacturing data often lives in silos: production systems track order and machine data while CMM systems capture quality measurements separately.
+## 🌐 Live App
 
-This platform demonstrates a true agentic AI approach that autonomously:
+Try the app here:https://rahulsnath206-agentic-ai-manufacturing-streamlit-app-er2gs3.streamlit.app/
 
-Discovers semantic relationships between these disparate datasets (schema mapping)
+---
 
-Integrates and merges data based on those relationships
+# 🚀 Project Overview
+**Manufacturing data often lives in silos: production systems track order and machine data while CMM systems capture quality measurements separately.**
 
-Calculates key quality metrics like pass/fail rates
+**This platform demonstrates a true agentic AI approach that autonomously:**
 
-Provides traceability of defects to production lots
+**Discovers semantic relationships between these disparate datasets (schema mapping)**
 
-Detects anomalies in measurement deviations using statistical methods
+**Integrates and merges data based on those relationships**
 
-All results are presented through a modern, tabbed, and user-friendly dashboard built with Streamlit and Plotly.
+**Calculates key quality metrics like pass/fail rates**
 
-🎯 Key Features
-File Uploads or Sample Data: Upload your own ERP and CMM CSV files or use the provided sample data to get started quickly
+**Provides traceability of defects to production lots**
 
-AI-Powered Schema Mapping: Automatically identify which columns correspond between production and quality data sources
+**Detects anomalies in measurement deviations using statistical methods**
 
-Seamless Data Integration: Merge datasets based on AI-discovered relationships to create a unified dataset for analysis
+**All results are presented through a modern, tabbed, and user-friendly dashboard built with Streamlit and Plotly.**
 
-Quality Analytics Dashboard: Interactive charts and tables showing pass/fail rates overall and by machine, shift, and plant
+---
 
-Traceability: Defects linked back to specific production lots for root cause analysis
+## 🎯 Key Features
 
-Anomaly Detection: Identify measurements with unusually high deviations beyond tolerance thresholds
+**File Uploads or Sample Data: Upload your own ERP and CMM CSV files or use the provided sample data to get started quickly**
 
-Export Options: Download unified datasets, defective lots, anomalies, and reporting summaries easily
+**AI-Powered Schema Mapping: Automatically identify which columns correspond between production and quality data sources**
 
-📂 Data Description
+**Seamless Data Integration: Merge datasets based on AI-discovered relationships to create a unified dataset for analysis**
+
+**Quality Analytics Dashboard: Interactive charts and tables showing pass/fail rates overall and by machine, shift, and plant**
+
+**Traceability: Defects linked back to specific production lots for root cause analysis**
+
+**Anomaly Detection: Identify measurements with unusually high deviations beyond tolerance thresholds**
+
+**Export Options: Download unified datasets, defective lots, anomalies, and reporting summaries easily**
+
+---
+
+## 📂 Data Description ##
+
 Production Data (ERP/MES)
-Production order IDs, Part IDs, Lot IDs
 
-Machine and operator information
-
-Production timestamps, quantities, and shifts
+**Production order IDs, Part IDs, Lot IDs**
+**Machine and operator information**
+**Production timestamps, quantities, and shifts**
 
 CMM Data (Quality Measurements)
-Measurement IDs, Component IDs
 
-Feature measurements with nominal and tolerance values
+**Measurement IDs, Component IDs**
+**Feature measurements with nominal and tolerance values**
+**Pass/fail quality results**
+**Measurement timestamps and inspector info**
 
-Pass/fail quality results
+---
 
-Measurement timestamps and inspector info
+## 🏗️ Architecture & Tools
 
-🏗️ Architecture & Tools
-Python 3.8+: Backend & data processing
+**Python 3.8+: Backend & data processing**
+**Pandas: Data manipulation**
+**NumPy: Numeric computations**
+**Streamlit: Web UI framework**
+**Plotly: Interactive data visualization**
+**Agentic AI: AI-driven schema mapping and analysis automation**
 
-Pandas: Data manipulation
+---
 
-NumPy: Numeric computations
+## 💡 Setup & Usage
 
-Streamlit: Web UI framework
+**Install dependencies**
+```bash
+pip install -r requirements.txt```
 
-Plotly: Interactive data visualization
+**Run the dashboard**
+```bash
+streamlit run streamlit_app_ultimate.py```
+## Workflow: ##
+**Upload your production and CMM CSV files or click Use Sample Data.**
 
-Agentic AI: AI-driven schema mapping and analysis automation
-
-💡 Setup & Usage
-Install dependencies
-bash
-pip install -r requirements.txt
-Run the dashboard
-bash
-streamlit run streamlit_app_ultimate.py
-Workflow:
-Upload your production and CMM CSV files or click Use Sample Data.
-
-The system automatically maps schemas, integrates data, and runs all analyses.
+**The system automatically maps schemas, integrates data, and runs all analyses.**
 
 Navigate tabs to explore AI-discovered mappings, integrated data preview, quality analytics, and anomaly detection.
 
