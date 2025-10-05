@@ -1,3 +1,7 @@
+# 🤖 Agentic AI Manufacturing Integration - Streamlit Interface
+# This file contains ONLY the user interface code
+# All data processing is handled by the imported AgenticProcessor
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -5,147 +9,9 @@ from datetime import datetime
 import plotly.express as px
 import plotly.graph_objects as go
 
-# ----- Enhanced Data Processor -----
-class AgenticProcessor:
-    def __init__(self):
-        self.prod = None
-        self.cmm = None
-        self.unified = None
-        self.mapping = {}
-        self.analysis_results = {}
+# Import our data processor (THE ENGINE)
+from data_processor import AgenticProcessor
 
-    def load_from_upload(self, prod_file, cmm_file):
-        """Load data from uploaded files"""
-        try:
-            if prod_file is not None and cmm_file is not None:
-                self.prod = pd.read_csv(prod_file)
-                self.cmm = pd.read_csv(cmm_file)
-                
-                # Convert timestamps
-                self.prod['production_timestamp'] = pd.to_datetime(
-                    self.prod['production_timestamp'], errors='coerce'
-                )
-                self.cmm['measurement_timestamp'] = pd.to_datetime(
-                    self.cmm['measurement_timestamp'], errors='coerce'
-                )
-                return True
-            return False
-        except Exception as e:
-            st.error(f"Error loading files: {str(e)}")
-            return False
-
-    def load_sample(self):
-        """Load sample data files"""
-        try:
-            self.prod = pd.read_csv("production_data.csv")
-            self.cmm = pd.read_csv("cmm_data.csv")
-            
-            self.prod['production_timestamp'] = pd.to_datetime(
-                self.prod['production_timestamp'], errors='coerce'
-            )
-            self.cmm['measurement_timestamp'] = pd.to_datetime(
-                self.cmm['measurement_timestamp'], errors='coerce'
-            )
-            return True
-        except Exception as e:
-            st.error(f"Error loading sample data: {str(e)}")
-            return False
-
-    def ai_schema_mapping(self):
-        """AI-powered schema mapping"""
-        if self.prod is None or self.cmm is None:
-            return {}
-        
-        # AI discovers semantic relationships
-        self.mapping = {
-            'part_id': 'component_id',
-            'lot_id': 'lot_id',
-            'production_timestamp': 'measurement_timestamp',
-            'machine_id': 'cmm_machine_id',
-            'operator_id': 'inspector_id'
-        }
-        return self.mapping
-
-    def create_unified_dataset(self):
-        """Create unified dataset"""
-        if self.prod is None or self.cmm is None:
-            return None
-            
-        if not self.mapping:
-            self.ai_schema_mapping()
-        
-        self.unified = pd.merge(
-            self.prod,
-            self.cmm,
-            on='lot_id',
-            how='inner',
-            suffixes=('_production', '_quality')
-        )
-        return self.unified
-
-    def comprehensive_analysis(self):
-        """Run comprehensive quality analysis"""
-        if self.unified is None:
-            self.create_unified_dataset()
-        
-        df = self.unified
-        
-        # Basic quality metrics
-        total = len(df)
-        passed = (df['result'] == 'pass').sum()
-        failed = (df['result'] == 'fail').sum()
-        
-        # Quality by machine
-        machine_quality = df.groupby('machine_id')['result'].apply(
-            lambda x: (x == 'pass').mean() * 100
-        ).round(1)
-        
-        # Quality by shift
-        shift_quality = df.groupby('shift')['result'].apply(
-            lambda x: (x == 'pass').mean() * 100
-        ).round(1)
-        
-        # Defective lots analysis
-        defective_lots = df[df['result'] == 'fail'].groupby('lot_id').agg({
-            'part_id': 'first',
-            'machine_id': 'first',
-            'shift': 'first',
-            'result': 'count'
-        }).rename(columns={'result': 'defect_count'}).reset_index()
-        defective_lots = defective_lots.sort_values('defect_count', ascending=False)
-        
-        # Anomaly detection (95th percentile method)
-        df['deviation'] = (df['measured_value'] - df['nominal_value']).abs()
-        deviation_threshold = df['deviation'].quantile(0.95)
-        anomalies = df[df['deviation'] > deviation_threshold]
-        
-        self.analysis_results = {
-            'overall': {
-                'total': total,
-                'passed': passed,
-                'failed': failed,
-                'pass_rate': (passed / total * 100) if total > 0 else 0,
-                'fail_rate': (failed / total * 100) if total > 0 else 0
-            },
-            'by_machine': machine_quality.to_dict(),
-            'by_shift': shift_quality.to_dict(),
-            'defective_lots': defective_lots,
-            'anomalies': anomalies,
-            'deviation_stats': {
-                'threshold': deviation_threshold
-            }
-        }
-        
-        return self.analysis_results
-
-    def auto_run_all_analysis(self):
-        """Automatically run all analysis steps"""
-        if self.prod is not None and self.cmm is not None:
-            self.ai_schema_mapping()
-            self.create_unified_dataset()
-            self.comprehensive_analysis()
-            return True
-        return False
 
 # ----- Helper function for colored dataframes -----
 def color_result_column(val):
@@ -156,6 +22,7 @@ def color_result_column(val):
         return 'color: #dc3545; font-weight: bold'
     return ''
 
+
 # ----- Streamlit App Configuration -----
 st.set_page_config(
     page_title="Agentic AI Manufacturing",
@@ -163,6 +30,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
 
 # ----- Modern CSS with Cohesive Purple Theme -----
 st.markdown("""
@@ -259,6 +127,7 @@ st.markdown("""
     border: none !important;
     border-radius: 10px !important;
 
+
   }
   .stButton>button:hover {
     opacity: 0.9 !important;
@@ -266,13 +135,17 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Initialize processor
+
+# ----- Initialize Session State with Data Processor -----
 if 'processor' not in st.session_state:
+    # Create instance of our data processor (THE ENGINE)
     st.session_state.processor = AgenticProcessor()
     st.session_state.data_loaded = False
     st.session_state.analysis_complete = False
 
+# Get the processor from session state
 processor = st.session_state.processor
+
 
 # ----- Modern Header -----
 st.markdown("""
@@ -284,6 +157,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+
 # ----- Data Upload Section (Below Header) -----
 st.markdown("""
 <div class="upload-section">
@@ -291,6 +165,7 @@ st.markdown("""
     <p style="color: #666; margin-bottom: 2rem;">Upload your manufacturing data files or use sample data to get started</p>
 </div>
 """, unsafe_allow_html=True)
+
 
 col1, col2, col3 = st.columns([2, 2, 1])
 
@@ -312,11 +187,15 @@ with col2:
 
 with col3:
     st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Upload Files Button - Calls processor methods
     if st.button("📤 Upload Files", type="primary", use_container_width=True):
         if production_file and cmm_file:
+            # Call the data processor to load files
             success = processor.load_from_upload(production_file, cmm_file)
             if success:
                 st.session_state.data_loaded = True
+                # Run all analysis automatically
                 processor.auto_run_all_analysis()
                 st.session_state.analysis_complete = True
                 st.success("🎉 Files loaded and analyzed!")
@@ -324,14 +203,18 @@ with col3:
         else:
             st.warning("⚠️ Please upload both files")
     
+    # Use Sample Data Button - Calls processor methods
     if st.button("📋 Use Sample Data", type="secondary", use_container_width=True):
+        # Call the data processor to load sample data
         success = processor.load_sample()
         if success:
             st.session_state.data_loaded = True
+            # Run all analysis automatically
             processor.auto_run_all_analysis()
             st.session_state.analysis_complete = True
             st.success("🎉 Sample data loaded and analyzed!")
             st.rerun()
+
 
 # Show data loading status
 if st.session_state.data_loaded:
@@ -343,6 +226,7 @@ if st.session_state.data_loaded:
 
 st.markdown("---")
 
+
 # ----- Tab Structure -----
 tab1, tab2, tab3, tab4 = st.tabs([
     "🧠 AI Schema Mapping",
@@ -351,6 +235,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "🚨 Anomaly Detection"
 ])
 
+
 # ----- TAB 1: AI Schema Mapping -----
 with tab1:
     st.header("🧠 AI-Powered Schema Mapping")
@@ -358,11 +243,11 @@ with tab1:
     if not st.session_state.data_loaded:
         st.info("⚠️ Please upload data or use sample data to see AI schema mapping results")
     else:
-        # Show mapping results automatically
+        # Show mapping results from processor
         st.subheader("🗺️ AI-Discovered Column Mappings")
         st.markdown("*The AI agent automatically discovered these semantic relationships:*")
         
-        # Create clean mapping table without confidence
+        # Get mapping from processor
         mapping_df = pd.DataFrame([
             {"Production Column": k, "CMM Column": v}
             for k, v in processor.mapping.items()
@@ -388,6 +273,7 @@ with tab1:
         
         st.markdown(f"✨ **AI successfully mapped {len(processor.mapping)} column relationships**")
 
+
 # ----- TAB 2: Data Integration -----
 with tab2:
     st.header("🔗 Intelligent Data Integration")
@@ -395,7 +281,11 @@ with tab2:
     if not st.session_state.analysis_complete:
         st.info("⚠️ Please load data first to see integration results")
     else:
+        # Get unified data from processor
         df = processor.unified
+        
+        # Get integration stats from processor
+        stats = processor.get_integration_stats()
         
         # Integration summary metrics
         col1, col2, col3, col4 = st.columns(4)
@@ -404,7 +294,7 @@ with tab2:
             st.markdown(f'''
             <div class="metric-card">
                 <h3 style="color: #667eea;">📦 Production</h3>
-                <h2 style="color: #333;">{len(processor.prod):,}</h2>
+                <h2 style="color: #333;">{stats.get('production_records', 0):,}</h2>
                 <p style="color: #666;">Records</p>
             </div>
             ''', unsafe_allow_html=True)
@@ -413,7 +303,7 @@ with tab2:
             st.markdown(f'''
             <div class="metric-card">
                 <h3 style="color: #667eea;">🔍 CMM</h3>
-                <h2 style="color: #333;">{len(processor.cmm):,}</h2>
+                <h2 style="color: #333;">{stats.get('cmm_records', 0):,}</h2>
                 <p style="color: #666;">Measurements</p>
             </div>
             ''', unsafe_allow_html=True)
@@ -422,13 +312,13 @@ with tab2:
             st.markdown(f'''
             <div class="metric-card success-card">
                 <h3 style="color: #7c4dff;">🔗 Unified</h3>
-                <h2 style="color: #333;">{len(df):,}</h2>
+                <h2 style="color: #333;">{stats.get('unified_records', 0):,}</h2>
                 <p style="color: #666;">Integrated Records</p>
             </div>
             ''', unsafe_allow_html=True)
             
         with col4:
-            integration_rate = (len(df) / max(len(processor.prod), len(processor.cmm))) * 100
+            integration_rate = stats.get('integration_rate', 0)
             st.markdown(f'''
             <div class="metric-card success-card">
                 <h3 style="color: #7c4dff;">📈 Success</h3>
@@ -475,6 +365,7 @@ with tab2:
         )
         st.caption(f"Showing {len(filtered_df):,} records (filtered from {len(df):,} total) • Pass = Green, Fail = Red")
 
+
 # ----- TAB 3: Quality Analytics -----  
 with tab3:
     st.header("📊 Comprehensive Quality Analytics")
@@ -482,6 +373,7 @@ with tab3:
     if not st.session_state.analysis_complete:
         st.info("⚠️ Please load data first to see quality analytics")
     else:
+        # Get analysis results from processor
         results = processor.analysis_results
         overall = results['overall']
         
@@ -580,6 +472,7 @@ with tab3:
         else:
             st.success("🎉 No defective lots found!")
 
+
 # ----- TAB 4: Anomaly Detection -----
 with tab4:
     st.header("🚨 Advanced Anomaly Detection")
@@ -587,6 +480,7 @@ with tab4:
     if not st.session_state.analysis_complete:
         st.info("⚠️ Please load data first to see anomaly detection results")
     else:
+        # Get anomaly results from processor
         results = processor.analysis_results
         anomalies = results['anomalies']
         
@@ -661,6 +555,7 @@ with tab4:
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.success("✅ No anomalies detected in current dataset!")
+
 
 # ----- Footer -----
 st.markdown("---")
