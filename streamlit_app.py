@@ -32,7 +32,7 @@ st.set_page_config(
 )
 
 
-# ----- Modern CSS with Cohesive Purple Theme -----
+# ----- css styling -----
 st.markdown("""
 <style>
     .main-header {
