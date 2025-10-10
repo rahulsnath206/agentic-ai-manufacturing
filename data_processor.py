@@ -8,6 +8,9 @@ import numpy as np
 import streamlit as st
 from datetime import datetime
 import logging
+from typing import Dict, List, Tuple, Any
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -98,13 +101,40 @@ class AgenticProcessor:
             st.error(f"Error loading sample data: {str(e)}")
             return False
 
-    def ai_schema_mapping(self):
+    # def ai_schema_mapping(self):
+    #     """
+    #     AI-powered schema mapping between production and CMM datasets
+    #     Discovers semantic relationships between columns
+        
+    #     Returns:
+    #         dict: Mapping of production columns to CMM columns
+    #     """
+    #     if self.prod is None or self.cmm is None:
+    #         logger.warning("Data not loaded for schema mapping")
+    #         return {}
+        
+    #     logger.info("Performing AI-powered schema mapping...")
+        
+    #     # AI discovers semantic relationships between datasets
+    #     # This simulates what an AI agent would determine
+    #     self.mapping = {
+    #         'part_id': 'component_id',           # Product/component identifier
+    #         'lot_id': 'lot_id',                  # Manufacturing batch identifier
+    #         'production_timestamp': 'measurement_timestamp',  # Time correlation
+    #         'machine_id': 'cmm_machine_id',      # Equipment relationship
+    #         'operator_id': 'inspector_id'        # Personnel correlation
+    #     }
+        
+    #     logger.info(f"Schema mapping completed: {len(self.mapping)} relationships found")
+    #     return self.mapping
+    
+    def ai_schema_mapping(self) -> Dict[str, str]:
         """
-        AI-powered schema mapping between production and CMM datasets
-        Discovers semantic relationships between columns
+        Use AI-like techniques to map schema between datasets
+        This simulates what an LLM would do - finding semantic similarities
         
         Returns:
-            dict: Mapping of production columns to CMM columns
+            Dict mapping production columns to CMM columns
         """
         if self.prod is None or self.cmm is None:
             logger.warning("Data not loaded for schema mapping")
@@ -112,18 +142,78 @@ class AgenticProcessor:
         
         logger.info("Performing AI-powered schema mapping...")
         
-        # AI discovers semantic relationships between datasets
-        # This simulates what an AI agent would determine
-        self.mapping = {
-            'part_id': 'component_id',           # Product/component identifier
-            'lot_id': 'lot_id',                  # Manufacturing batch identifier
-            'production_timestamp': 'measurement_timestamp',  # Time correlation
-            'machine_id': 'cmm_machine_id',      # Equipment relationship
-            'operator_id': 'inspector_id'        # Personnel correlation
+        # Get column names and create descriptions
+        prod_cols = list(self.prod.columns)
+        cmm_cols = list(self.cmm.columns)
+    
+        # Create semantic descriptions for columns
+        column_descriptions = {
+            # Production columns
+            'production_order_id': 'production order identifier number',
+            'part_id': 'part component identifier number',
+            'lot_id': 'manufacturing lot batch identifier',
+            'production_timestamp': 'production manufacturing date time',
+            'quantity': 'quantity amount number produced',
+            'machine_id': 'machine equipment identifier',
+            'operator_id': 'operator worker identifier',
+            'shift': 'work shift time period',
+            'plant_code': 'plant facility location code',
+            'status': 'production status state',
+            
+            # CMM columns  
+            'measurement_id': 'measurement test identifier number',
+            'component_id': 'component part identifier number',
+            'lot_id': 'manufacturing lot batch identifier',
+            'feature_name': 'measured feature characteristic name',
+            'nominal_value': 'target nominal specification value',
+            'upper_tolerance': 'upper tolerance limit specification',
+            'lower_tolerance': 'lower tolerance limit specification', 
+            'measured_value': 'actual measured test value',
+            'measurement_timestamp': 'measurement test date time',
+            'cmm_machine_id': 'cmm measurement machine identifier',
+            'inspector_id': 'quality inspector identifier',
+            'result': 'test measurement result outcome'
         }
         
-        logger.info(f"Schema mapping completed: {len(self.mapping)} relationships found")
-        return self.mapping
+        # Use TF-IDF similarity to find matches
+        vectorizer = TfidfVectorizer()
+        
+        # Get descriptions for each dataset
+        prod_descriptions = [column_descriptions.get(col, col) for col in prod_cols]
+        cmm_descriptions = [column_descriptions.get(col, col) for col in cmm_cols]
+        
+        # Combine all descriptions for vectorization
+        all_descriptions = prod_descriptions + cmm_descriptions
+        tfidf_matrix = vectorizer.fit_transform(all_descriptions)
+        
+        # Calculate similarity matrix
+        similarity_matrix = cosine_similarity(
+            tfidf_matrix[:len(prod_cols)], 
+            tfidf_matrix[len(prod_cols):]
+        )
+        
+        # Find best matches
+        mappings = {}
+        for i, prod_col in enumerate(prod_cols):
+            similarities = similarity_matrix[i]
+            best_match_idx = np.argmax(similarities)
+            best_score = similarities[best_match_idx]
+            
+            if best_score > 0.3:  # Threshold for meaningful similarity
+                mappings[prod_col] = cmm_cols[best_match_idx]
+        
+        # Add obvious direct mappings that AI would definitely catch
+        obvious_mappings = {
+            'part_id': 'component_id',  # These are clearly the same
+            'lot_id': 'lot_id'  # Exact match
+        }
+        
+        mappings.update(obvious_mappings)
+        self.mapping = mappings  # Keep consistent with existing code
+        
+        logger.info(f"Schema mapping completed: {mappings}")
+        return mappings
+
 
     def create_unified_dataset(self):
         """
